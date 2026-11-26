@@ -22289,9 +22289,9 @@ async function scan(batchIndex = 0) {
   sources.push(["AEW official schedule", aewCalendar], ["MLB Florida official schedule", baseballCalendar]);
   sources.push(...PERFORMANCE_VENUES.map((v) => [v.name + " official", (start, end2) => performanceCalendar(v, start, end2)]));
   sources.push(...VENUES.map((v) => [v.name + " official", (start, end2) => venueCalendar(v, start, end2)]));
-  const sourceNames = sources.map(([name]) => name), batchCount = Math.ceil(sources.length / 6);
+  const sourceNames = sources.map(([name]) => name), batchCount = sources.length;
   if (!Number.isInteger(batchIndex) || batchIndex < 0 || batchIndex >= batchCount) throw Error("Invalid scan batch.");
-  const selectedSources = sources.slice(batchIndex * 6, (batchIndex + 1) * 6);
+  const selectedSources = sources.slice(batchIndex, batchIndex + 1);
   const settled = await Promise.allSettled(selectedSources.map(async ([name, fn]) => ({ name, ...await fn(now - 864e5, end) })));
   const status = settled.map((r, i) => r.status === "fulfilled" ? { name: selectedSources[i][0], checked_at: new Date(now).toISOString(), ok: true, count: r.value.events.length, truncated: r.value.truncated, ...r.value.venue ? { venue: r.value.venue } : {} } : { name: selectedSources[i][0], checked_at: new Date(now).toISOString(), ok: false, count: 0, error: r.reason.message });
   const seen = /* @__PURE__ */ new Map(), events = [];
@@ -22968,7 +22968,7 @@ async function handleRequest(request, env, ctx, HTML, ASSETS) {
     if (u.pathname === "/api/refresh" && request.method === "POST") {
       if (!owner) return json7({ error: "Only the authenticated owner can run a shared calendar update." }, 403);
       const body = await request.json().catch(() => ({}));
-      if (body.batch_index !== undefined && (!Number.isInteger(body.batch_index) || body.batch_index < 0 || body.batch_index > 20)) return json7({error:"Invalid scan batch"},400);
+      if (body.batch_index !== undefined && (!Number.isInteger(body.batch_index) || body.batch_index < 0 || body.batch_index > 200)) return json7({error:"Invalid scan batch"},400);
       return json7(await refreshStore(env, { trigger: "manual", batchIndex: body.batch_index }));
     }
     if (u.pathname === "/api/preferences") {
@@ -23058,9 +23058,9 @@ var entry_default = {
   async scheduled(event2, env, ctx) {
     if (env.REFRESH_ENABLED !== "true") return;
     if (!env.DB) throw Error("Missing event database");
-    if (event2.cron === "15 * * * *") {
+    if (event2.cron === "55 * * * *") {
       ctx.waitUntil(resolveStoredLocations(env));
-    } else if (event2.cron === "20 * * * *") {
+    } else if (event2.cron === "56 * * * *") {
       ctx.waitUntil((async () => {
         const started_at = nowISO();
         try {
