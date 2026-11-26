@@ -22685,7 +22685,7 @@ async function currentEvents(db, windowDays = 7) {
 async function refreshStore(env, options = {}) {
   const db = env.DB;
   if (!db) throw Error("Event database is not configured.");
-  const stamp = Date.now(), lease = stamp + 24e4;
+  const stamp = Date.now(), lease = stamp + 9e4;
   const lock = await db.prepare("INSERT INTO leases(key,expires_at) VALUES('refresh',?) ON CONFLICT(key) DO UPDATE SET expires_at=excluded.expires_at WHERE leases.expires_at<?").bind(lease, stamp).run();
   if (!lock.meta.changes) return { busy: true };
   const run = { id: crypto.randomUUID(), trigger: options.trigger === "scheduled" ? "scheduled" : "manual", started_at: nowISO(), status: "running" };
@@ -22701,9 +22701,18 @@ async function refreshStore(env, options = {}) {
     }
     const cursor = await getState(db, "scan_batch_cursor");
     const batchIndex = options.batchIndex ?? (Number.isInteger(cursor) && cursor >= 0 ? cursor : 0);
+    const sourceCount = 9 + PERFORMANCE_VENUES.length + VENUES.length;
+    if (!Number.isInteger(batchIndex) || batchIndex < 0 || batchIndex >= sourceCount) throw Error("Invalid scan batch.");
+    // Advance before parsing: a runtime termination must not pin every future scan to one page.
+    await setState(db,"scan_batch_cursor",(batchIndex+1)%sourceCount);
+    const priorScan = await getState(db,"last_scan");
+    if (priorScan?.sources?.[batchIndex]) {
+      priorScan.sources[batchIndex] = {...priorScan.sources[batchIndex],ok:false,error:"Source scan is pending or was interrupted; previous listings retained",checked_at:nowISO()};
+      await setState(db,"last_scan",priorScan);
+    }
     const result = await scan(batchIndex), at = nowISO();
     // Recover verified coordinates before a sparse source response can erase them.
-    const storedRows = await db.prepare("SELECT payload FROM events WHERE ends_at>?").bind(at).all();
+    const storedRows = await db.prepare("SELECT payload FROM events WHERE ends_at>? AND json_type(payload,'$.lat') IN ('integer','real') AND json_type(payload,'$.lng') IN ('integer','real')").bind(at).all();
     const storedEvents = storedRows.results.flatMap(row => { try { return [JSON.parse(row.payload)]; } catch { return []; } });
     const storedById = new Map(storedEvents.map(event => [event.id, event]));
     const recovered = result.events.map(event => {
