@@ -1569,9 +1569,14 @@ var web_default = `<!DOCTYPE html>
       button.disabled = true; icon.classList.add('animate-spin');
       document.getElementById('sourceScanSummary').textContent = '\u2014 Searching\u2026';
       try {
-        const refresh = await fetch('/api/refresh', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-        const refreshResult = await refresh.json();
-        if (!refresh.ok) throw Error(refreshResult.error || 'Scan could not finish. Saved listings are still available.');
+        let batchCount = 1;
+        for (let batchIndex = 0; batchIndex < batchCount; batchIndex++) {
+          document.getElementById('sourceScanSummary').textContent = 'Scanning source group ' + (batchIndex + 1) + (batchCount > 1 ? ' of ' + batchCount : '') + '…';
+          const refresh = await fetch('/api/refresh', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({batch_index:batchIndex})});
+          const refreshResult = await refresh.json();
+          if (!refresh.ok || refreshResult.busy) throw Error(refreshResult.error || 'Another scan is active. Completed groups are saved; try again shortly.');
+          batchCount = refreshResult.batch_count || 1;
+        }
         const response = await fetch('/api/events', {cache:'no-store'});
         const data = await response.json();
         if (!response.ok || !Array.isArray(data.events)) throw Error('Live calendars unavailable. Existing listings retained.');
@@ -21925,7 +21930,7 @@ async function readBounded(response) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.length;
-      if (size > 15e5) throw Error("Official page exceeds scan size limit.");
+      if (size > 3e6) throw Error("Official page exceeds scan size limit.");
       text2 += decoder.decode(value, { stream: true });
     }
     return text2 + decoder.decode();
@@ -22088,15 +22093,15 @@ async function expandedVenueCalendar(venue,start,end) {
     if(url && /\/events?\/(?:detail\/)?[^/?#]+/.test(new URL(url).pathname) && !/calendar|category|page\//.test(new URL(url).pathname) && !details.includes(url)) details.push(url);
   }
   let detailFailures=0;
-  for(let i=0;i<Math.min(details.length,12);i+=3) {
-    const rows=await Promise.allSettled(details.slice(i,Math.min(i+3,12)).map(async url=>parseExpandedStructured(await read(url),venue,now,limit)));
+  for(let i=0;i<Math.min(details.length,3);i+=3) {
+    const rows=await Promise.allSettled(details.slice(i,Math.min(i+3,3)).map(async url=>parseExpandedStructured(await read(url),venue,now,limit)));
     for(const row of rows) if(row.status==="fulfilled") result.events.push(...row.value); else detailFailures++;
   }
   result.events=[...new Map(result.events.map(e=>[[e.title.toLowerCase(),e.start,venue.key].join("|"),e])).values()].slice(0,120);
   result.events=result.events.map(e=>({...e,hub:venue.neighborhood ? venue.city+" / "+venue.neighborhood : e.hub}));
   result.venue.note += " Weekly sessions are imported only when verified on the current page. Coverage is partial.";
   if(detailFailures) result.venue.note += " Some linked event pages could not be read.";
-  return {...result,truncated:details.length>12 || detailFailures>0};
+  return {...result,truncated:details.length>3 || detailFailures>0};
 }
 
 async function venueCalendar(venue, start, end) {
@@ -22275,15 +22280,18 @@ function preferOfficialKickoff(previous, event2) {
   const coords = Number.isFinite(event2.lat) && Number.isFinite(event2.lng) ? {} : Number.isFinite(previous.lat) && Number.isFinite(previous.lng) ? { lat: previous.lat, lng: previous.lng, coordinate_source: previous.coordinate_source || previous.source_url } : {};
   return { ...previous, ...event2, ...coords, id: previous.id, alias_ids: [.../* @__PURE__ */ new Set([previous.id, event2.id, ...previous.alias_ids || [], ...event2.alias_ids || []])], image_url: event2.image_url || previous.image_url };
 }
-async function scan() {
+async function scan(batchIndex = 0) {
   const now = Date.now(), end = now + 90 * 864e5;
   const sources = [["Visit Jacksonville", jacksonville], ["Amelia Island", amelia], ["Visit St. Augustine", (start, end2) => staugustine(start, Math.min(end2, Date.now() + 7 * 864e5))], ["Explore Clay", (start, end2) => amelia(start, end2, "https://exploreclay.com", "Explore Clay", "Orange Park / Clay", "clay")]];
   sources.push(...[["Jacksonville Jaguars", "Jaguars official schedule", "https://www.jaguars.com/schedule/"], ["Miami Dolphins", "Dolphins official schedule", "https://www.miamidolphins.com/schedule/"], ["Tampa Bay Buccaneers", "Buccaneers official schedule", "https://www.buccaneers.com/schedule/"]].map(([team, name, url]) => [name, (start, end2) => nflCalendar(start, end2, team, name, url)]));
   sources.push(["AEW official schedule", aewCalendar], ["MLB Florida official schedule", baseballCalendar]);
   sources.push(...PERFORMANCE_VENUES.map((v) => [v.name + " official", (start, end2) => performanceCalendar(v, start, end2)]));
   sources.push(...VENUES.map((v) => [v.name + " official", (start, end2) => venueCalendar(v, start, end2)]));
-  const settled = await Promise.allSettled(sources.map(async ([name, fn]) => ({ name, ...await fn(now - 864e5, end) })));
-  const status = settled.map((r, i) => r.status === "fulfilled" ? { name: sources[i][0], ok: true, count: r.value.events.length, truncated: r.value.truncated, ...r.value.venue ? { venue: r.value.venue } : {} } : { name: sources[i][0], ok: false, count: 0, error: r.reason.message });
+  const sourceNames = sources.map(([name]) => name), batchCount = Math.ceil(sources.length / 6);
+  if (!Number.isInteger(batchIndex) || batchIndex < 0 || batchIndex >= batchCount) throw Error("Invalid scan batch.");
+  const selectedSources = sources.slice(batchIndex * 6, (batchIndex + 1) * 6);
+  const settled = await Promise.allSettled(selectedSources.map(async ([name, fn]) => ({ name, ...await fn(now - 864e5, end) })));
+  const status = settled.map((r, i) => r.status === "fulfilled" ? { name: selectedSources[i][0], checked_at: new Date(now).toISOString(), ok: true, count: r.value.events.length, truncated: r.value.truncated, ...r.value.venue ? { venue: r.value.venue } : {} } : { name: selectedSources[i][0], checked_at: new Date(now).toISOString(), ok: false, count: 0, error: r.reason.message });
   const seen = /* @__PURE__ */ new Map(), events = [];
   for (const r of settled) if (r.status === "fulfilled") for (const e of r.value.events) {
     if (Date.parse(e.end) < now || Date.parse(e.start) > end) continue;
@@ -22298,7 +22306,7 @@ async function scan() {
     events.push(e);
   }
   events.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
-  return { events, sources: status, scanned_at: (/* @__PURE__ */ new Date()).toISOString(), window_days: 90, coverage_note: "Concerts, comedy, official theater performances and sports: up to 90 days where supplied. Other local and recurring venue sessions: 7 days. Direct coverage includes bowling, skating, golf, go-karts, laser tag, arcades, clubs, lounges, concert venues and arenas where official schedules can be read. Venue hours and official specials links are shown separately under Attractions & Deals; a readable page does not guarantee all events were imported. Florida NFL home games imported where available; college, high school and other statewide schedules are linked separately and are not comprehensive. " + (status.find((s) => s.name === "Explore Clay")?.ok ? "Explore Clay responded this scan. " : "Clay County coverage is limited: the Explore Clay feed is unavailable; retained listings may be outdated. Check exploreclay.com/event-directory/month/ directly. ") + "Calendar coverage is partial. Baker County, independent venues and unlisted events are not comprehensively covered. Unmapped events have no verified radius or distance." };
+  return { events, sources: status, source_names: sourceNames, batch_index: batchIndex, batch_count: batchCount, next_batch: (batchIndex + 1) % batchCount, scanned_at: (/* @__PURE__ */ new Date()).toISOString(), window_days: 90, coverage_note: "Concerts, comedy, official theater performances and sports: up to 90 days where supplied. Other local and recurring venue sessions: 7 days. Direct coverage includes bowling, skating, golf, go-karts, laser tag, arcades, clubs, lounges, concert venues and arenas where official schedules can be read. Venue hours and official specials links are shown separately under Attractions & Deals; a readable page does not guarantee all events were imported. Florida NFL home games imported where available; college, high school and other statewide schedules are linked separately and are not comprehensive. " + (status.find((s) => s.name === "Explore Clay")?.ok ? "Explore Clay responded this scan. " : "Clay County coverage is limited: the Explore Clay feed is unavailable; retained listings may be outdated. Check exploreclay.com/event-directory/month/ directly. ") + "Calendar coverage is partial. Baker County, independent venues and unlisted events are not comprehensively covered. Unmapped events have no verified radius or distance." };
 }
 
 // node_modules/uint8array-extras/index.js
@@ -22689,7 +22697,9 @@ async function refreshStore(env, options = {}) {
     } catch {
       payments = { failed: true };
     }
-    const result = await scan(), at = nowISO();
+    const cursor = await getState(db, "scan_batch_cursor");
+    const batchIndex = options.batchIndex ?? (Number.isInteger(cursor) && cursor >= 0 ? cursor : 0);
+    const result = await scan(batchIndex), at = nowISO();
     // Recover verified coordinates before a sparse source response can erase them.
     const storedRows = await db.prepare("SELECT payload FROM events WHERE ends_at>?").bind(at).all();
     const storedEvents = storedRows.results.flatMap(row => { try { return [JSON.parse(row.payload)]; } catch { return []; } });
@@ -22708,9 +22718,13 @@ async function refreshStore(env, options = {}) {
       for (const source of result.sources.filter((s) => s.ok && !s.truncated)) await db.prepare("DELETE FROM events WHERE source=? AND last_seen<?").bind(source.name, at).run();
       await db.prepare("DELETE FROM events WHERE ends_at<?").bind(at).run();
     }
-    const status = { ...result, events: void 0, count: result.events.length, classification_version: 2, category_review_required: result.events.filter((e) => e.classification_review_required).length, completed_at: at };
+    const previousScan = await getState(db, "last_scan"), combinedSources = new Map((previousScan?.sources || []).map(source => [source.name,source]));
+    for (const source of result.sources) combinedSources.set(source.name, source);
+    const allSources = result.source_names.map(name => combinedSources.get(name) || {name,ok:false,count:0,pending:true,error:"Awaiting scheduled scan batch"});
+    const status = { ...result, source_names: void 0, sources: allSources, events: void 0, count: (await currentEvents(db,90)).length, classification_version: 2, category_review_required: result.events.filter((e) => e.classification_review_required).length, completed_at: at };
+    await setState(db,"scan_batch_cursor",result.next_batch);
     await setState(db, "last_scan", status);
-    const push = options.skipNotifications ? { deferred: true, configured: Boolean(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) } : await processNotifications(env, options);
+    const push = options.skipNotifications || result.next_batch !== 0 ? { deferred: true, configured: Boolean(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) } : await processNotifications(env, options);
     const completed = { ...run, status: success.length ? "completed" : "failed", completed_at: nowISO(), count: result.events.length, successful_sources: success.length, push, payments };
     await db.prepare("DELETE FROM app_state WHERE key LIKE 'scan_run:%' AND key NOT IN (SELECT key FROM app_state WHERE key LIKE 'scan_run:%' ORDER BY key DESC LIMIT 168)").run();
     await setState(db, "last_run", completed);
@@ -22951,7 +22965,9 @@ async function handleRequest(request, env, ctx, HTML, ASSETS) {
     }
     if (u.pathname === "/api/refresh" && request.method === "POST") {
       if (!owner) return json7({ error: "Only the authenticated owner can run a shared calendar update." }, 403);
-      return json7(await refreshStore(env, { trigger: "manual" }));
+      const body = await request.json().catch(() => ({}));
+      if (body.batch_index !== undefined && (!Number.isInteger(body.batch_index) || body.batch_index < 0 || body.batch_index > 20)) return json7({error:"Invalid scan batch"},400);
+      return json7(await refreshStore(env, { trigger: "manual", batchIndex: body.batch_index }));
     }
     if (u.pathname === "/api/preferences") {
       if (request.method === "GET") {
@@ -23042,7 +23058,7 @@ var entry_default = {
     if (!env.DB) throw Error("Missing event database");
     if (event2.cron === "15 * * * *") {
       ctx.waitUntil(resolveStoredLocations(env));
-    } else if (event2.cron === "10 * * * *") {
+    } else if (event2.cron === "20 * * * *") {
       ctx.waitUntil((async () => {
         const started_at = nowISO();
         try {
