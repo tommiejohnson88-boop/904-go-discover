@@ -2706,6 +2706,7 @@ async function sponsorRoute(request, env, owner) {
 // worker/enrichment.js
 var OFFICIAL_HOSTS = /* @__PURE__ */ new Set(["www.visitjacksonville.com", "visitjacksonville.com", "www.ameliaisland.com", "ameliaisland.com", "www.visitstaugustine.com", "visitstaugustine.com", "exploreclay.com", "www.exploreclay.com", "www.jaguars.com", "www.miamidolphins.com", "www.buccaneers.com", "www.allelitewrestling.com", "www.mlb.com", "www.jaxevents.com", "arena.jaxevents.com", "www.dailysplace.com", "www.theamp.com", "everbankstadium.com", "www.hardrockstadium.com", "hardrockstadium.com", "raymondjamesstadium.com", "www.daveandbusters.com", "www.mainevent.com", "topgolf.com", "www.k1speed.com", "www.beachbowljax.com", "battfamilyfuncenter.com", "www.bowlero.com"]);
 for (const host of ["pac.jaxevents.com", "www.comedyzone.com", "www.alhambrajax.com", "sales.alhambrajax.com", "www.floridatheatre.com", "www.opct.info", "opct.booktix.com"]) OFFICIAL_HOSTS.add(host);
+for (const host of ["jaxlanes.com", "www.skatecityjax.com", "www.planetskaterollerrink.com", "funworks.com", "bravoz.com", "mythexperience.com", "jaxlive.com", "thealbatrossjax.com", "www.deccalive.com", "www.bluejayjax.com", "app.opendate.io", "www.dailysplace.com", "www.theamp.com", "celestiascoastalcuisine.com", "www.thecasbahcafe.com", "sandollarrestaurant.com", "www.palmsfishcamp.com", "mrchubbyswings.com", "elcabojacksonville.com", "www.enzas.net", "rsljax.com", "www.alientaco.net", "stringssportsbrewery.com", "stringssportsbrewery.com", "monkeysuncletavern.com", "mavijax.com", "www.cafesanmarco.com"]) OFFICIAL_HOSTS.add(host);
 function officialURL(value) {
   try {
     const u = new URL(value);
@@ -3153,8 +3154,10 @@ var VENUES = [
   { key: "bowlero-southside", name: "Bowlero Southside", type: "Bowling", city: "Jacksonville", address: "11141 Beach Boulevard", url: "https://www.bowlero.com/location/bowlero-southside" },
   { key: "bowlero-mandarin", name: "Bowlero Mandarin", type: "Bowling", city: "Jacksonville", address: "10333 San Jose Boulevard", url: "https://www.bowlero.com/location/bowlero-mandarin" }
 ];
+VENUES.push(...[{"key": "jax-lanes", "name": "Jax Lanes Bowling Center", "type": "Bowling & arcades", "city": "Jacksonville", "address": "8720 Beach Boulevard", "url": "https://jaxlanes.com/"}, {"key": "sk8-city", "name": "Sk8City Jacksonville", "type": "Skating, miniature golf & arcades", "city": "Jacksonville", "address": "9244 Arlington Expressway", "url": "https://www.skatecityjax.com/"}, {"key": "planet-skate", "name": "Planet Skate Roller Rink", "type": "Roller skating & family entertainment", "city": "Jacksonville", "address": "9441 Lem Turner Road", "url": "https://www.planetskaterollerrink.com/"}, {"key": "skate-mandarin", "name": "Skate Station Funworks Mandarin", "type": "Skating, miniature golf & arcades", "city": "Jacksonville", "address": "3461 Kori Road", "url": "https://funworks.com/mandarin/event-calendar/"}, {"key": "skate-op", "name": "Skate Station Funworks Orange Park", "type": "Skating, miniature golf & arcades", "city": "Orange Park", "address": "230 Blanding Boulevard", "url": "https://funworks.com/orange-park/hours-pricing/"}, {"key": "bravoz", "name": "Bravoz Entertainment Center", "type": "Laser tag, arcades & family entertainment", "city": "Jacksonville", "address": "14985 Old St. Augustine Road", "url": "https://bravoz.com/", "follow_events": true, "single_venue": true}, {"key": "myth", "name": "Myth Nightclub", "type": "Nightclub & Element Bistro lounge", "city": "Jacksonville", "address": "333 East Bay Street", "url": "https://mythexperience.com/", "follow_events": true, "single_venue": true, "categories": ["social_nightlife"]}, {"key": "jack-rabbits", "name": "Jack Rabbits", "type": "Concerts & live music", "city": "Jacksonville", "address": "1528 Hendricks Avenue", "url": "https://jaxlive.com/", "follow_events": true, "single_venue": true, "categories": ["live_music"], "performance": true}, {"key": "albatross", "name": "The Albatross", "type": "Live music & nightlife (formerly Underbelly)", "city": "Jacksonville", "address": "113 East Bay Street", "url": "https://thealbatrossjax.com/home", "follow_events": true, "single_venue": true, "categories": ["social_nightlife", "live_music"], "performance": true}, {"key": "decca", "name": "DECCA LIVE", "type": "Concerts & nightlife", "city": "Jacksonville", "address": "323 East Bay Street", "url": "https://www.deccalive.com/", "follow_events": true, "single_venue": true, "categories": ["live_music", "social_nightlife"], "performance": true}, {"key": "blue-jay", "name": "Blue Jay Listening Room", "type": "Live music & jazz", "city": "Jacksonville Beach", "address": "2457 South 3rd Street", "url": "https://app.opendate.io/v/blue-jay-listening-room-2734", "single_venue": true, "categories": ["live_music"], "performance": true}, {"key": "dailys-place", "name": "Daily’s Place", "type": "Concerts", "city": "Jacksonville", "address": "1 Daily’s Place", "url": "https://www.dailysplace.com/events", "follow_events": true, "single_venue": true, "categories": ["live_music"], "performance": true}, {"key": "staug-amp", "name": "St. Augustine Amphitheatre", "type": "Concerts", "city": "St. Augustine", "address": "1340C A1A South", "url": "https://www.theamp.com/events", "follow_events": true, "single_venue": true, "categories": ["live_music"], "performance": true}, {"key": "celestias", "name": "Celestia’s Coastal Cuisine", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "Northside", "address": "6765 Dunn Avenue", "url": "https://celestiascoastalcuisine.com/", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "casbah", "name": "The Casbah Cafe", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "Avondale", "address": "3628 St. Johns Avenue", "url": "https://www.thecasbahcafe.com/about", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "sandollar", "name": "Sandollar Restaurant", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "Northside", "address": "9716 Heckscher Drive", "url": "https://sandollarrestaurant.com/events", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "palms-fish-camp", "name": "Palms Fish Camp Restaurant", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "Northside", "address": "6359 Heckscher Drive", "url": "https://www.palmsfishcamp.com/live-music", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "chubbys-west", "name": "Mr. Chubby's Wings Westside", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "Westside", "address": "11043 Crystal Springs Road", "url": "https://mrchubbyswings.com/westside-location", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "el-cabo", "name": "El Cabo Restaurant", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "Arlington / Regency", "address": "620 Commerce Center Drive", "url": "https://elcabojacksonville.com/events/2gubqYvibniC", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "enzas", "name": "Enza’s Italian Restaurant", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "Mandarin", "address": "10601 San Jose Boulevard", "url": "https://www.enzas.net/", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "riverside-liquors", "name": "The Restaurant in Riverside", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "Riverside", "address": "1251 King Street", "url": "https://rsljax.com/", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "alien-taco", "name": "Alien Taco & Tequila Bar", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "Southside", "address": "7643 Gate Parkway", "url": "https://www.alientaco.net/events/", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "strings-springfield", "name": "Strings Sports Brewery Springfield", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "Springfield", "address": "1850 North Main Street", "url": "https://stringssportsbrewery.com/events/", "follow_events": true, "single_venue": false, "categories": ["food_drink"]}, {"key": "strings-beach", "name": "Strings Sports Brewery Jacksonville Beach", "type": "Local restaurant & entertainment", "city": "Jacksonville Beach", "neighborhood": "Beaches", "address": "1618 Penman Road", "url": "https://stringssportsbrewery.com/events/", "follow_events": true, "single_venue": false, "categories": ["food_drink"]}, {"key": "monkeys-uncle", "name": "Monkey’s Uncle Tavern", "type": "Local restaurant & entertainment", "city": "Jacksonville Beach", "neighborhood": "Beaches", "address": "1850 South 3rd Street", "url": "https://monkeysuncletavern.com/events/", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "mavi", "name": "Mavi Waterfront Bar & Grill", "type": "Local restaurant & entertainment", "city": "Jacksonville Beach", "neighborhood": "Beaches", "address": "2309 Beach Boulevard", "url": "https://mavijax.com/", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}, {"key": "cafe-san-marco", "name": "Cafe San Marco", "type": "Local restaurant & entertainment", "city": "Jacksonville", "neighborhood": "San Marco", "address": "San Marco", "url": "https://www.cafesanmarco.com/", "follow_events": true, "single_venue": true, "categories": ["food_drink"]}]);
 var PERFORMANCE_VENUES = [
   { key: "jax-performing-arts", name: "Jacksonville Center for the Performing Arts", type: "Moran, Jacoby & Terry theaters", city: "Jacksonville", address: "300 West Water Street", url: "https://pac.jaxevents.com/events-tickets/", calendar_url: "https://www.jaxevents.com/events-tickets/" },
+  { key: "vystar-arena", name: "VyStar Veterans Memorial Arena", type: "Arena concerts & sports", city: "Jacksonville", address: "300 A. Philip Randolph Boulevard", url: "https://arena.jaxevents.com/events-tickets/", calendar_url: "https://www.jaxevents.com/events-tickets/", calendar_label: "VyStar Veterans Memorial Arena", categories: ["special_events"] },
   { key: "comedy-zone", name: "Comedy Zone Jacksonville", type: "Comedy", city: "Jacksonville", address: "3130 Hartley Road", url: "https://www.comedyzone.com/events" },
   { key: "alhambra", name: "Alhambra Theatre & Dining", type: "Theater & dining", city: "Jacksonville", address: "12000 Beach Blvd", url: "https://www.alhambrajax.com/" },
   { key: "florida-theatre", name: "Florida Theatre", type: "Performing arts", city: "Jacksonville", address: "128 East Forsyth Street", url: "https://www.floridatheatre.com/events/" },
@@ -21754,10 +21757,11 @@ function parsePerformingArts(rows, v, start, end) {
     const url = safe(d.url, v.calendar_url || v.url);
     if (!url || !new URL(url).pathname.startsWith("/event/")) continue;
     const at = easternTime(localDate.format(new Date(d.date)) + "T" + d.startTime), host = clean2(d.hostname || d.host?.title), hall = host.match(/\b(Moran Theat(?:er|re)|Jacoby Hall|Terry Theat(?:er|re))\b/i)?.[1];
-    const description = clean2(d.description), categories = ["theater_dance"];
+    const description = clean2(d.description), categories = v.categories ? [...v.categories] : ["theater_dance"];
+    if (v.key === "vystar-arena" && /icemen|hockey|basketball|football|wrestling|pbr|rodeo/i.test(title+" "+description)) categories.push("sports");
     if (/\b(comedian|stand[ -]?up|comedy albums|comedy masters|comedy content)\b/i.test(description)) categories.push("comedy");
     if (/\b(orchestra|symphony|concert|band|live music)\b/i.test(title + " " + description) && !/\b(musical|ballet|nutcracker)\b/i.test(title)) categories.push("live_music");
-    const e = event(v, { title, start: at, url, categories, description, location_name: (hall ? hall + " \xB7 " : "") + v.name + " \xB7 " + v.address + ", Jacksonville", image_url: d.media_raw?.find((m) => m.mediatype === "Image")?.mediaurl });
+    const e = event(v, { title, start: at, url, categories, description, location_name: (hall ? hall + " \xB7 " : "") + v.name + " \xB7 " + v.address + ", " + v.city, image_url: d.media_raw?.find((m) => m.mediatype === "Image")?.mediaurl });
     const geo = validGeo({ latitude: d.latitude, longitude: d.longitude });
     if (geo) Object.assign(e, geo, { coordinate_source: v.url });
     e.hall = hall || null;
@@ -21773,7 +21777,7 @@ function parsePerformingArts(rows, v, start, end) {
 }
 async function performingArtsCalendar(v, start, end) {
   const base = new URL(v.calendar_url || v.url).origin, html = await read(v.calendar_url || v.url), config = html.match(/var venueCalendars\s*=\s*(\[[^;]+\]);/), venues = config ? JSON.parse(config[1]) : null;
-  const ids = venues?.filter((item) => item.label === "Jacksonville Center for the Performing Arts").map((item) => item.value);
+  const ids = venues?.filter((item) => item.label === (v.calendar_label || "Jacksonville Center for the Performing Arts")).map((item) => item.value);
   if (!Array.isArray(ids) || !ids.length || ids.length > 5 || ids.some((id) => !/^\d+$/.test(id))) throw Error("Performing arts calendar configuration changed");
   const token = (await read(base + "/plugins/core/get_simple_token/")).trim();
   if (!token || token.length > 4e3) throw Error("Public calendar access unavailable");
@@ -21795,7 +21799,7 @@ async function performingArtsCalendar(v, start, end) {
 async function performanceCalendar(v, start, end) {
   if (!PERFORMANCE_VENUES.includes(v)) throw Error("Unknown performance source");
   let events;
-  if (v.key === "jax-performing-arts") return performingArtsCalendar(v, start, end);
+  if (v.key === "jax-performing-arts" || v.key === "vystar-arena") return performingArtsCalendar(v, start, end);
   if (v.key === "comedy-zone") events = parseComedy(await read(v.url), v, start, end);
   else if (v.key === "alhambra") events = parseAlhambra(await read(v.url), v, start, end);
   else if (v.key === "orange-park-theatre") {
@@ -21930,13 +21934,174 @@ async function readBounded(response) {
     });
   }
 }
+// Verified venue schedules. Rules activate only while the official page still publishes them.
+function venueVisibleText(html) {
+  return clean3(html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " "))
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Math.min(1114111, Number(n))))
+    .replace(/&ndash;|&mdash;|[–—−]/g, "-").replace(/[\u200b-\u200d]/g, "").replace(/\s+/g, " ");
+}
+function venueWeeklyEvents(html, venue, now, end) {
+  const text = venueVisibleText(html), compact = text.replace(/\s+/g, ""), rules = [];
+  const add = (guard, days, title, from, to, extra = {}) => {
+    if (guard.test(compact)) rules.push({ days, title: title + " at " + venue.name, from, to, ...extra });
+  };
+  if (venue.key === "dave-jax") {
+    add(/Mon-Frifrom4-7PM/i, [1,2,3,4,5], "Happy Hour", "16:00", "19:00", {category:"happy_hours", age:"21+ for alcoholic drinks"});
+    add(/Sun-Thufrom9PM-close/i, [0,1,2,3,4], "Late-night Happy Hour", "21:00", "close", {category:"happy_hours", age:"21+ for alcoholic drinks"});
+  }
+  if (venue.key === "sk8-city") {
+    for (const [day, number] of [["Tuesday",2],["Wednesday",3],["Thursday",4]]) add(new RegExp(day+"5PM-9PM", "i"), [number], "Open skate", "17:00", "21:00");
+    add(/Friday5PM-10PM/i, [5], "Open skate", "17:00", "22:00");
+    add(/SaturdaySession11pm-6pmSession2\*?7pm-10pm/i, [6], "Afternoon open skate", "13:00", "18:00");
+    add(/SaturdaySession11pm-6pmSession2\*?7pm-10pm/i, [6], "Evening open skate", "19:00", "22:00");
+    add(/SundaySession11pm-7:00pmSession2\*?7:30pm-11pm\*?Adults18andolder/i, [0], "Adult skate", "19:30", "23:00", {age:"18+", category:"social_nightlife"});
+  }
+  if (venue.key === "planet-skate") {
+    for (const [day, number] of [["Tuesday",2],["Wednesday",3],["Thursday",4]]) add(new RegExp(day+"4:30PM-8:30PM", "i"), [number], "Open skate", "16:30", "20:30");
+    add(/Friday5PM-10PM/i, [5], "Open skate", "17:00", "22:00");
+    add(/Saturday1stSession1pm-6pm/i, [6], "Afternoon open skate", "13:00", "18:00");
+    add(/Saturday2ndSession7pm-10pm/i, [6], "Evening open skate", "19:00", "22:00");
+    // Sunday has conflicting published hours; keep it in venue hours until clarified.
+  }
+  if (venue.key === "skate-op") {
+    add(/sunday1-5,Adults7:30-11:30pm/i, [0], "Adult Night", "19:30", "23:30", {age:"18+", category:"social_nightlife"});
+    add(/tuesdayAdults6-9:30pmThrowbackAdultNight/i, [2], "Throwback Adult Night", "18:00", "21:30", {age:"18+", category:"social_nightlife"});
+    add(/thursday6-9pmFamilyNight6-9pm/i, [4], "Family Night", "18:00", "21:00");
+    add(/friday7:30-10:30pmFantasticFriday/i, [5], "Fantastic Friday skating", "19:30", "22:30");
+  }
+  if (venue.key === "skate-mandarin") {
+    add(/1st,2nd,3rdThursdayoftheMonth8-10:30pmAges18\+AdultNight/i, [4], "Adult Night", "20:00", "22:30", {age:"18+", category:"social_nightlife", week: "first-three"});
+    add(/LastThursdayofeachMonth!?8-10:30pmAges16\+/i, [4], "Throwback Thursday skating", "20:00", "22:30", {age:"16+", category:"social_nightlife", week: "last"});
+    // Temporary closure notices override every recurring rule until they are removed.
+    if (/Closed(?:thru|through)|ClosedNov\./i.test(compact)) return [];
+  }
+  if (venue.key === "jax-lanes") {
+    add(/CosmicHoursFriday:9pm-closeSaturday:8pm-close/i, [5], "Cosmic bowling", "21:00", "01:00");
+    add(/CosmicHoursFriday:9pm-closeSaturday:8pm-close/i, [6], "Cosmic bowling", "20:00", "01:00");
+    if (!/Friday11am-1amSaturday11am-1am/i.test(compact)) return [];
+  }
+  if (venue.key === "chubbys-west") {
+    add(/WednesdayBigMoneyBingo7:30-9PM,thenKaraoke9-Close/i,[3],"Bingo", "19:30","21:00",{category:"tournaments"});
+    add(/WednesdayBigMoneyBingo7:30-9PM,thenKaraoke9-Close/i,[3],"Karaoke", "21:00",null,{category:"social_nightlife"});
+    add(/FridayLiveMusic8PM-12AM/i,[5],"Live music", "20:00","00:00",{category:"live_music"});
+    add(/MondayTriviaNight7:30PM/i,[1],"Trivia night", "19:30",null,{category:"tournaments"});
+  }
+  if (venue.key === "casbah") {
+    add(/HappyHourDaily3:00PM-7:00PM/i,[0,1,2,3,4,5,6],"Happy Hour", "15:00","19:00",{category:"happy_hours",age:"21+ for alcoholic drinks"});
+  }
+  if (venue.key === "enzas") {
+    add(/HappyHoureveryevening4to7pm/i,[0,2,3,4,5,6],"Happy Hour", "16:00","19:00",{category:"happy_hours",age:"21+ for alcoholic drinks"});
+  }
+  if (venue.key === "riverside-liquors") {
+    add(/FreeWineTasting:EveryWednesday6-8pm|EveryWednesday[·:]6:00pm-8:00pm/i,[3],"Free wine tasting", "18:00","20:00",{category:"food_drink",age:"21+"});
+  }
+  if (venue.key === "el-cabo") {
+    add(/ThursdayNights=Karaoke[\s\S]{0,400}6:30-10:30PM[\s\S]{0,60}RepeatseveryThursday/i,[4],"Karaoke", "18:30","22:30",{category:"social_nightlife"});
+  }
+  if (venue.key === "monkeys-uncle") {
+    add(/KaraokeNights:Wednesday,SaturdayandSundayat9:30p\.m\./i,[3,6,0],"Karaoke", "21:30",null,{category:"social_nightlife"});
+    add(/EveryTuesdayat7:30p\.m\./i,[2],"Trivia night", "19:30",null,{category:"tournaments"});
+    add(/PoolTournament:EveryWednesdayat7:30p\.m\./i,[3],"Pool tournament", "19:30",null,{category:"tournaments"});
+    add(/LivemusiceveryThursdayandFridaynightfrom9:30p\.m\./i,[4,5],"Live music", "21:30",null,{category:"live_music"});
+  }
+  if (venue.key === "strings-beach") {
+    add(/Fridays&Saturdays-7:30PM-10:30PMBrews&BeatsLiveMusicJaxBeach/i,[5,6],"Brews & Beats live music", "19:30","22:30",{category:"live_music"});
+    add(/BINGOhostedbyZacheveryTuesdayevening6-7:30inJaxBeach/i,[2],"Bingo", "18:00","19:30",{category:"tournaments"});
+  }
+  const events = [], dateFormat = new Intl.DateTimeFormat("en-CA", {timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"});
+  const closeTime = weekday => {
+    const name = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][weekday];
+    for (const d of documents2(html)) for (const h of array(d.openingHoursSpecification)) {
+      if (!array(h.dayOfWeek).some(x => String(x).split("/").pop() === name)) continue;
+      if (/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(h.closes || "")) return h.closes;
+    }
+    return null;
+  };
+  for (let i=0; i<8; i++) {
+    const day = dateFormat.format(new Date(now + i*864e5)), date = new Date(day+"T12:00:00Z"), weekday = date.getUTCDay();
+    for (const rule of rules) {
+      if (!rule.days.includes(weekday)) continue;
+      if (rule.week === "first-three" && date.getUTCDate() > 21) continue;
+      if (rule.week === "last" && new Date(date.getTime()+7*864e5).getUTCMonth() === date.getUTCMonth()) continue;
+      const until = rule.to === "close" ? closeTime(weekday) : rule.to;
+      if (rule.to && !until) continue;
+      const finishDay = until <= rule.from ? new Date(date.getTime()+864e5).toISOString().slice(0,10) : day;
+      const at = easternTime(day+"T"+rule.from+":00"), finish = until ? easternTime(finishDay+"T"+until+":00") : null, category=rule.category||"family_fun";
+      let record = finish ? eventRecord(venue,rule.title,at,finish,venue.url,category,true) : event(venue,{title:rule.title,start:at,url:venue.url,categories:[category]});
+      if (Date.parse(record.end)<=now || Date.parse(at)>end) continue;
+      delete record.schedule_scope;
+      events.push(discoveryEvent({...record, source_categories:[category], age:rule.age||"Check venue", schedule_type:"recurring_session", recurring:true, end_time_known:Boolean(finish), description:"Published weekly session or offer. Holiday schedules, school breaks, private closures, admission and local offer terms may differ; confirm with the venue before visiting.", recurrence_verified_at:new Date(now).toISOString()}));
+    }
+  }
+  return events;
+}
+function parseExpandedStructured(html, venue, start, end) {
+  const events=[];
+  for (const d of documents2(html)) {
+    if (!array(d["@type"]).some(t=>/(?:^|\/)\w*Event$/.test(t)) || /cancel|postpon|soldout/i.test(d.eventStatus||"")) continue;
+    const title=clean3(d.name), places=array(d.location);
+    if (!title || /private|book your|corporate event|birthday party/i.test(title)) continue;
+    const local=places.some(p=>{
+      const name=clean3(p?.name).toLowerCase(), address=p?.address, city=clean3(address?.addressLocality).toLowerCase();
+      const state=clean3(address?.addressRegion).toLowerCase();
+      return (!state || /^(fl|florida)$/.test(state)) && (name.includes(venue.name.toLowerCase()) || (city===venue.city.toLowerCase() && venue.single_venue===true));
+    });
+    if (!local) continue;
+    const at=time(d.startDate), finish=time(d.endDate), url=safeLink(d.url||venue.url,venue)||venue.url;
+    if (!at || !url || !Number.isFinite(Date.parse(at))) continue;
+    if (finish && Date.parse(finish)<=Date.parse(at)) continue;
+    const categories=venue.categories||["family_fun"];
+    const row=event(venue,{title,start:at,end:finish,url,categories,description:clean3(d.description)});
+    Object.assign(row,structuredDetails(d,url));
+    if (!venue.performance) delete row.schedule_scope;
+    if (inWindow(row,start,end)) events.push(row);
+  }
+  return events;
+}
+function parseBlueJayCalendar(html,venue,start,end) {
+  const events=[];
+  // Opendate's server-rendered public event cards contain full dates and show times.
+  for(const m of html.matchAll(/<a\b[^>]*href=["'](https:\/\/app\.opendate\.io\/e\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>\s*<\/p>\s*(<p\b[^>]*>[\s\S]*?<\/p>\s*<p\b[^>]*>[\s\S]*?<\/p>)/gi)) {
+    const text=venueVisibleText(m[3]), date=text.match(/([A-Z][a-z]+ \d{1,2}, \d{4})\s+Doors:\s*\d{1,2}:\d{2}\s*[AP]M\s*-\s*Show:\s*(\d{1,2}):(\d{2})\s*([AP]M)/);
+    if(!date) continue;
+    const parsed=new Date(date[1]+" 12:00:00 GMT"), hour=(Number(date[2])%12)+(date[4]==="PM"?12:0);
+    if(!Number.isFinite(parsed.getTime())) continue;
+    const at=easternTime(parsed.toISOString().slice(0,10)+"T"+String(hour).padStart(2,"0")+":"+date[3]+":00"), url=safeLink(m[1],venue), title=venueVisibleText(m[2]).trim();
+    if(!title || !url || !new URL(url).pathname.startsWith("/e/")) continue;
+    const row=event(venue,{title,start:at,url,categories:["live_music"],description:"Official Blue Jay Listening Room show. Check the ticket page for admission and the event's age limit.",location_name:venue.name+" · "+venue.address+", "+venue.city});
+    if(inWindow(row,start,end)) events.push(row);
+  }
+  return events;
+}
+async function expandedVenueCalendar(venue,start,end) {
+  const now=Date.now(), limit=venue.performance?end:Math.min(end,now+7*864e5);
+  const response=await fetch(venue.url,{redirect:"manual",signal:AbortSignal.timeout(15e3)});
+  if(!response.ok) throw await sourceFailure(response,"Official venue page returned HTTP ");
+  if(!response.headers.get("content-type")?.includes("text/html")) throw Error("Official venue page format unavailable.");
+  const html=await readBounded(response), result=parseVenue(html,venue,now,limit);
+  result.events.push(...venueWeeklyEvents(html,venue,now,limit),...parseExpandedStructured(html,venue,now,limit));
+  if(venue.key==="blue-jay") result.events.push(...parseBlueJayCalendar(html,venue,now,limit));
+  // Follow a bounded number of same-host event details already linked by the official calendar.
+  const details=[];
+  if(venue.follow_events) for(const m of html.matchAll(/<a\b[^>]*href=["']([^"']+)["']/gi)) {
+    const url=safeLink(m[1].replace(/&amp;/g,"&"),venue);
+    if(url && /\/events?\/(?:detail\/)?[^/?#]+/.test(new URL(url).pathname) && !/calendar|category|page\//.test(new URL(url).pathname) && !details.includes(url)) details.push(url);
+  }
+  let detailFailures=0;
+  for(let i=0;i<Math.min(details.length,12);i+=3) {
+    const rows=await Promise.allSettled(details.slice(i,Math.min(i+3,12)).map(async url=>parseExpandedStructured(await read(url),venue,now,limit)));
+    for(const row of rows) if(row.status==="fulfilled") result.events.push(...row.value); else detailFailures++;
+  }
+  result.events=[...new Map(result.events.map(e=>[[e.title.toLowerCase(),e.start,venue.key].join("|"),e])).values()].slice(0,120);
+  result.events=result.events.map(e=>({...e,hub:venue.neighborhood ? venue.city+" / "+venue.neighborhood : e.hub}));
+  result.venue.note += " Weekly sessions are imported only when verified on the current page. Coverage is partial.";
+  if(detailFailures) result.venue.note += " Some linked event pages could not be read.";
+  return {...result,truncated:details.length>12 || detailFailures>0};
+}
+
 async function venueCalendar(venue, start, end) {
   if (!VENUES.some((v) => v === venue)) throw Error("Unknown venue source.");
-  const response = await fetch(venue.url, { redirect: "manual", signal: AbortSignal.timeout(15e3) });
-  if (!response.ok) throw await sourceFailure(response, "Official venue page returned HTTP ");
-  if (!response.headers.get("content-type")?.includes("text/html")) throw Error("Official venue page format unavailable.");
-  const result = parseVenue(await readBounded(response), venue, Date.now(), Math.min(end, Date.now() + 7 * 864e5));
-  return { ...result, truncated: false };
+  return expandedVenueCalendar(venue, start, end);
 }
 
 // worker/scanner.js
@@ -22133,7 +22298,7 @@ async function scan() {
     events.push(e);
   }
   events.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
-  return { events, sources: status, scanned_at: (/* @__PURE__ */ new Date()).toISOString(), window_days: 90, coverage_note: "Concerts, comedy, official theater performances and sports: up to 90 days where supplied. Other local and venue events: 7 days. Venue hours and official specials links are shown separately under Attractions & Deals; a readable page does not guarantee all events were imported. Florida NFL home games imported where available; college, high school and other statewide schedules are linked separately and are not comprehensive. " + (status.find((s) => s.name === "Explore Clay")?.ok ? "Explore Clay responded this scan. " : "Clay County coverage is limited: the Explore Clay feed is unavailable; retained listings may be outdated. Check exploreclay.com/event-directory/month/ directly. ") + "Calendar coverage is partial. Baker County, independent venues and unlisted events are not comprehensively covered. Unmapped events have no verified radius or distance." };
+  return { events, sources: status, scanned_at: (/* @__PURE__ */ new Date()).toISOString(), window_days: 90, coverage_note: "Concerts, comedy, official theater performances and sports: up to 90 days where supplied. Other local and recurring venue sessions: 7 days. Direct coverage includes bowling, skating, golf, go-karts, laser tag, arcades, clubs, lounges, concert venues and arenas where official schedules can be read. Venue hours and official specials links are shown separately under Attractions & Deals; a readable page does not guarantee all events were imported. Florida NFL home games imported where available; college, high school and other statewide schedules are linked separately and are not comprehensive. " + (status.find((s) => s.name === "Explore Clay")?.ok ? "Explore Clay responded this scan. " : "Clay County coverage is limited: the Explore Clay feed is unavailable; retained listings may be outdated. Check exploreclay.com/event-directory/month/ directly. ") + "Calendar coverage is partial. Baker County, independent venues and unlisted events are not comprehensively covered. Unmapped events have no verified radius or distance." };
 }
 
 // node_modules/uint8array-extras/index.js
