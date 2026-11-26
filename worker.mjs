@@ -1573,6 +1573,7 @@ var web_default = `<!DOCTYPE html>
         for (let batchIndex = 0; batchIndex < batchCount; batchIndex++) {
           document.getElementById('sourceScanSummary').textContent = 'Scanning source group ' + (batchIndex + 1) + (batchCount > 1 ? ' of ' + batchCount : '') + '…';
           const refresh = await fetch('/api/refresh', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({batch_index:batchIndex})});
+          if (!refresh.headers.get("content-type")?.includes("application/json")) throw Error("The hosting service interrupted this scan group. Completed groups remain saved; retry shortly.");
           const refreshResult = await refresh.json();
           if (!refresh.ok || refreshResult.busy) throw Error(refreshResult.error || 'Another scan is active. Completed groups are saved; try again shortly.');
           batchCount = refreshResult.batch_count || 1;
@@ -21870,8 +21871,8 @@ function time(value) {
 function eventRecord(venue, title, start, end, url, category = "family_fun", recurring = false) {
   return discoveryEvent({ id: "venue-" + venue.key + "-" + start + "-" + title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 70), source: venue.name + " official", venue_key: venue.key, title, description: "Public activity listed by the venue. Confirm availability, admission, age restrictions and any closures on the official page.", start, end, location_name: venue.name + " \xB7 " + venue.address + ", " + venue.city, hub: venue.city, lat: null, lng: null, category, categories: [category], tags: [venue.type], source_url: url, time_range: new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }).format(new Date(start)) + " ET", price: "Check venue", age: "Check venue", recurring });
 }
-function parseVenue(html, venue, now = Date.now(), end = now + 7 * 864e5) {
-  const docs = documents2(html), hours = [], events = [], links = [];
+function parseVenue(html, venue, now = Date.now(), end = now + 7 * 864e5, prepared = {}) {
+  const docs = prepared.docs || documents2(html), hours = [], events = [], links = [];
   const local = (d) => clean3(d.name).toLowerCase() === venue.name.toLowerCase() || clean3(d.address?.addressLocality).toLowerCase() === venue.city.toLowerCase() || safeLink(d.url || d["@id"], venue) === venue.url;
   for (const d of docs) {
     if (local(d)) {
@@ -21896,7 +21897,7 @@ function parseVenue(html, venue, now = Date.now(), end = now + 7 * 864e5) {
     } catch {
     }
   }
-  const visible = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "");
+  const visible = prepared.visible ?? html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "");
   if (!hours.length) {
     const day3 = "(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)", clock = "\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)";
     const re = new RegExp("\\b" + day3 + "(?:\\s*[-\u2013]\\s*" + day3 + ")?\\s*:?\\s*" + clock + "\\s*[-\u2013]\\s*" + clock, "gi");
@@ -21945,8 +21946,8 @@ function venueVisibleText(html) {
     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Math.min(1114111, Number(n))))
     .replace(/&ndash;|&mdash;|[–—−]/g, "-").replace(/[\u200b-\u200d]/g, "").replace(/\s+/g, " ");
 }
-function venueWeeklyEvents(html, venue, now, end) {
-  const text = venueVisibleText(html), compact = text.replace(/\s+/g, ""), rules = [];
+function venueWeeklyEvents(html, venue, now, end, prepared = {}) {
+  const text = prepared.text || venueVisibleText(html), compact = text.replace(/\s+/g, ""), rules = [];
   const add = (guard, days, title, from, to, extra = {}) => {
     if (guard.test(compact)) rules.push({ days, title: title + " at " + venue.name, from, to, ...extra });
   };
@@ -22016,7 +22017,7 @@ function venueWeeklyEvents(html, venue, now, end) {
   const events = [], dateFormat = new Intl.DateTimeFormat("en-CA", {timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"});
   const closeTime = weekday => {
     const name = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][weekday];
-    for (const d of documents2(html)) for (const h of array(d.openingHoursSpecification)) {
+    for (const d of prepared.docs || documents2(html)) for (const h of array(d.openingHoursSpecification)) {
       if (!array(h.dayOfWeek).some(x => String(x).split("/").pop() === name)) continue;
       if (/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(h.closes || "")) return h.closes;
     }
@@ -22040,9 +22041,9 @@ function venueWeeklyEvents(html, venue, now, end) {
   }
   return events;
 }
-function parseExpandedStructured(html, venue, start, end) {
+function parseExpandedStructured(html, venue, start, end, docs = documents2(html)) {
   const events=[];
-  for (const d of documents2(html)) {
+  for (const d of docs) {
     if (!array(d["@type"]).some(t=>/(?:^|\/)\w*Event$/.test(t)) || /cancel|postpon|soldout/i.test(d.eventStatus||"")) continue;
     const title=clean3(d.name), places=array(d.location);
     if (!title || /private|book your|corporate event|birthday party/i.test(title)) continue;
@@ -22083,8 +22084,9 @@ async function expandedVenueCalendar(venue,start,end) {
   const response=await fetch(venue.url,{redirect:"manual",signal:AbortSignal.timeout(15e3)});
   if(!response.ok) throw await sourceFailure(response,"Official venue page returned HTTP ");
   if(!response.headers.get("content-type")?.includes("text/html")) throw Error("Official venue page format unavailable.");
-  const html=await readBounded(response), result=parseVenue(html,venue,now,limit);
-  result.events.push(...venueWeeklyEvents(html,venue,now,limit),...parseExpandedStructured(html,venue,now,limit));
+  const html=await readBounded(response), visible=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi," ").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi," ");
+  const prepared={docs:documents2(html),visible,text:venueVisibleText(visible)}, result=parseVenue(html,venue,now,limit,prepared);
+  result.events.push(...venueWeeklyEvents(html,venue,now,limit,prepared),...parseExpandedStructured(html,venue,now,limit,prepared.docs));
   if(venue.key==="blue-jay") result.events.push(...parseBlueJayCalendar(html,venue,now,limit));
   // Follow a bounded number of same-host event details already linked by the official calendar.
   const details=[];
@@ -22721,7 +22723,7 @@ async function refreshStore(env, options = {}) {
     const previousScan = await getState(db, "last_scan"), combinedSources = new Map((previousScan?.sources || []).map(source => [source.name,source]));
     for (const source of result.sources) combinedSources.set(source.name, source);
     const allSources = result.source_names.map(name => combinedSources.get(name) || {name,ok:false,count:0,pending:true,error:"Awaiting scheduled scan batch"});
-    const status = { ...result, source_names: void 0, sources: allSources, events: void 0, count: (await currentEvents(db,90)).length, classification_version: 2, category_review_required: result.events.filter((e) => e.classification_review_required).length, completed_at: at };
+    const status = { ...result, source_names: void 0, sources: allSources, events: void 0, count: Number((await db.prepare("SELECT COUNT(*) AS count FROM events WHERE ends_at>? AND starts_at<=?").bind(at,new Date(Date.now()+90*864e5).toISOString()).first()).count), classification_version: 2, category_review_required: result.events.filter((e) => e.classification_review_required).length, completed_at: at };
     await setState(db,"scan_batch_cursor",result.next_batch);
     await setState(db, "last_scan", status);
     const push = options.skipNotifications || result.next_batch !== 0 ? { deferred: true, configured: Boolean(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) } : await processNotifications(env, options);
