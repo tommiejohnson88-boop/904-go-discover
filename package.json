@@ -1,0 +1,1 @@
+{"name":"904-go-discover","version":"1.0.0","private":true,"type":"module","scripts":{"deploy":"wrangler deploy","check":"node --check worker.mjs"},"devDependencies":{"wrangler":"4.168.0"}}

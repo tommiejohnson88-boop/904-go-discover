@@ -1,0 +1,30 @@
+{
+  "name": "904-go-discover-staging",
+  "account_id": "7bff786660f412ce7cd7757a7c012f5c",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-30",
+  "keep_vars": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "STATIC_ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "904-go-discover-staging-db",
+      "database_id": "388c5f3a-efd8-4c46-8ff9-5de239c78f02"
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "5 * * * *",
+      "10 * * * *",
+      "15 * * * *"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}
