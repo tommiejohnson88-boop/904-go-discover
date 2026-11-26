@@ -262,7 +262,8 @@ var web_default = `<!DOCTYPE html>
     #discoveryControls label:not([hidden]) { display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap; }
     #discoveryControls label[hidden] { display:none; }
     #discoveryControls select { flex:1;width:100%;min-width:0;min-height:36px; }
-    #discoveryUtility { grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px; }
+    #discoveryUtility { grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
+    .new-listing-badge { display:inline-flex;align-items:center;padding:3px 8px;border:1px solid #f0cb58;border-radius:6px;background:#fff3bf;color:#344316;font-size:12px;font-weight:800;letter-spacing:.04em; }
     #resetFiltersBtn { flex-shrink:0; }
     #backToTop[hidden] { display:none !important; }
     #discoveryNote { margin:0;font-size:15px;line-height:1.4; }
@@ -390,7 +391,7 @@ var web_default = `<!DOCTYPE html>
     <label>Area <select id="discoveryArea" style="background:#27272a;padding:7px;border-radius:8px"><option value="nearby">Nearby radius + unmapped regional</option><option value="firstcoast">First Coast</option><option value="florida">All Florida</option></select></label>
     <label id="sportTypeLabel" hidden>Sport <select id="discoverySport" style="background:#27272a;padding:7px;border-radius:8px"><option>All sports</option><option>NFL</option><option>College football</option><option>Hockey</option><option>Baseball</option><option>Basketball</option><option>Soccer</option><option>Wrestling / AEW</option><option>High school</option><option>Football</option></select></label>
     <label id="offerTypeLabel" hidden>Browse <select id="discoveryOffer" style="background:#27272a;padding:7px;border-radius:8px"><option>All official pages</option><option>Offers</option><option>Tickets &amp; passes</option><option>Florida residents</option><option>Arcades &amp; entertainment</option><option>Golf</option><option>Go-karting</option><option>Bowling</option></select></label>
-    <div id="discoveryUtility"><p id="discoveryNote" style="color:#a1a1aa">Nearby local events for the next seven days.</p><button id="resetFiltersBtn" type="button" style="min-height:36px;padding:7px 12px;border:1px solid #3f3f46;border-radius:8px;color:#e2e8f0">Reset filters</button></div>
+    <div id="discoveryUtility"><p id="discoveryNote" style="color:#a1a1aa">Nearby local events for the next seven days.</p><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button id="recentlyAddedBtn" type="button" aria-pressed="false" title="Listings first added in the past 7 days, newest first" style="min-height:36px;padding:7px 12px;border:1px solid #bfa546;border-radius:8px;color:#f4dc8a;white-space:nowrap">Recently Added <span id="recentlyAddedCount"></span></button><button id="resetFiltersBtn" type="button" style="min-height:36px;padding:7px 12px;border:1px solid #3f3f46;border-radius:8px;color:#e2e8f0">Reset filters</button></div></div>
   </div>
   <section id="discoveryDirectory" hidden style="padding:12px;background:#0c151c"><details><summary id="discoveryDirectoryTitle" style="cursor:pointer;color:#67e8f9">Official schedules and coverage</summary><p id="discoveryCoverage" style="font-size:15px;color:#cbd5e1;margin:10px 0"></p><div id="discoveryLinks" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"></div></details></section>
   <!-- 7-Day Weekly Schedule Filter Bar (Thursday Oct 22, 2026 Reference) -->
@@ -857,6 +858,7 @@ var web_default = `<!DOCTYPE html>
     let currentCategoryFilter = 'all';
     let activeHubFilter = 'all';
     let currentSearchTerm = '';
+    let recentlyAddedOnly = false;
 
     let mapInstance = null;
     let markersLayer = null;
@@ -1065,6 +1067,7 @@ var web_default = `<!DOCTYPE html>
       return [...hours].sort((a,b)=>{const rank=v=>{const i=days.indexOf(String(v).slice(0,3).toLowerCase());return i<0?7:i;};return rank(a)-rank(b);}).map(formatVenueHour);
     }
     function resetEventFilters(){
+      recentlyAddedOnly=false;
       currentSearchTerm='';document.getElementById('omniSearchInput').value='';document.getElementById('clearSearchBtn').classList.add('hidden');
       activeDayFilter='all';activeHubFilter='all';currentCategoryFilter='all';discoveryDays=7;discoveryArea='nearby';discoverySport='All sports';
       document.getElementById('discoveryDates').value='7';document.getElementById('discoveryArea').value='nearby';document.getElementById('discoverySport').value='All sports';document.getElementById('discoveryOffer').value='All official pages';
@@ -1122,11 +1125,35 @@ var web_default = `<!DOCTYPE html>
       document.getElementById('discoveryArea').onchange=e=>{discoveryArea=e.target.value;updateDiscovery();};
       document.getElementById('discoverySport').onchange=e=>{discoverySport=e.target.value;updateDiscovery();};
       document.getElementById('resetFiltersBtn').onclick=resetEventFilters;
+      document.getElementById('recentlyAddedBtn').onclick=()=>{recentlyAddedOnly=!recentlyAddedOnly;deselectEvent();renderApp();};
       document.getElementById('discoveryOffer').onchange=()=>{renderDiscoveryDirectory();syncSavedButtons();};
       fetch('/api/discovery').then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{discoveryDirectory=d.directory;renderDiscoveryDirectory();syncSavedButtons();}).catch(()=>{document.getElementById('discoveryCoverage').textContent='Official source links could not load. Retry shortly.';});
     }
+    // Newness uses the original saved discovery date, not the last scan or event date.
+    function isNewListing(ev, now=Date.now()) {
+      const added=Date.parse(ev.first_seen || '');
+      return Number.isFinite(added) && added<=now && now-added<=7*86400000;
+    }
+    function listingAddedLabel(ev) {
+      return new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZone:'America/New_York'}).format(new Date(ev.first_seen))+' ET';
+    }
+    function newListingBadge(ev) {
+      return isNewListing(ev) ? '<span class="new-listing-badge" title="'+escapeHTML('First added '+listingAddedLabel(ev))+'">New</span>' : '';
+    }
+    function newListingAddedLine(ev) {
+      return isNewListing(ev) ? '<p class="mt-1 text-xs" style="color:#f4dc8a">Added '+escapeHTML(listingAddedLabel(ev))+'</p>' : '';
+    }
+    function updateRecentlyAddedControl() {
+      const button=document.getElementById('recentlyAddedBtn');
+      button.hidden=discoverySection==='attractions';
+      button.setAttribute('aria-pressed',String(recentlyAddedOnly));
+      button.style.background=recentlyAddedOnly?'#fff3bf':'transparent';
+      button.style.color=recentlyAddedOnly?'#344316':'#f4dc8a';
+      document.getElementById('recentlyAddedCount').textContent='('+getFilteredEvents({ignoreRecent:true}).filter(ev=>isNewListing(ev)).length+')';
+    }
+
     // --- Multi-Criteria Filter ---
-    function getFilteredEvents({ignoreCategory=false,ignoreDay=false} = {}) {
+    function getFilteredEvents({ignoreCategory=false,ignoreDay=false,ignoreRecent=false} = {}) {
       const q = currentSearchTerm.toLowerCase().trim();
 
       return discoveryListings().filter(ev => {
@@ -1154,7 +1181,7 @@ var web_default = `<!DOCTYPE html>
           matchesSearch = titleMatch || locMatch || hubMatch || descMatch || tagsMatch;
         }
 
-        return withinRadius && matchesDay && matchesCategory && matchesHub && matchesSearch;
+        return withinRadius && matchesDay && matchesCategory && matchesHub && matchesSearch && (ignoreRecent || !recentlyAddedOnly || isNewListing(ev));
       });
     }
 
@@ -1202,6 +1229,7 @@ var web_default = `<!DOCTYPE html>
 
     // --- Update Dynamic Pill & Day Counts ---
     function updateCounts() {
+      updateRecentlyAddedControl();
       const withinRadius = getFilteredEvents({ignoreCategory:true});
 
       // Category counts within radius
@@ -1231,6 +1259,7 @@ var web_default = `<!DOCTYPE html>
     // --- Render Event Sidebar Feed ---
     let feedLimit=40,feedFilterKey='';
     function sortEventListings(listings, allListings) {
+      if(recentlyAddedOnly) return listings.sort((a,b)=>(Date.parse(b.first_seen)||0)-(Date.parse(a.first_seen)||0) || (Date.parse(a.start)||0)-(Date.parse(b.start)||0));
       const seriesKey = ev => [ev.source || '', ev.title || '', ev.location_name || ''].map(v => v.trim().toLowerCase()).join('|');
       const dates = new Map();
       const dateFormatter = new Intl.DateTimeFormat('en-CA', {timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
@@ -1259,8 +1288,11 @@ var web_default = `<!DOCTYPE html>
       sortEventListings(filtered, typeof eventsData === 'undefined' ? filtered : eventsData);
 
       countBadge.textContent = filtered.length;
+      if(recentlyAddedOnly){if(heading)heading.textContent='Recently Added';feedRadiusSubtitle.title='First added within the past 7 days; newest first. Your other filters still apply.';}else{feedRadiusSubtitle.removeAttribute('title');}
       radiusBannerText.textContent = \`\${filtered.length} listings \xB7 \${typeof discoveryArea==='undefined'||discoveryArea==='nearby'?activeRadiusMiles+'-mile map + unmapped regional events':discoveryArea==='florida'?'All Florida':'First Coast'}\`;
       feedRadiusSubtitle.textContent = \`Next \${typeof discoveryDays==='undefined'?7:discoveryDays} days \xB7 \${typeof discoveryArea==='undefined'||discoveryArea==='nearby'?activeRadiusMiles+'-mile radius':discoveryArea==='florida'?'All Florida':'First Coast'} \xB7 unmapped listings labeled\`;
+
+      if(recentlyAddedOnly) feedRadiusSubtitle.textContent='Added in the past 7 days · Newest first · Other filters apply';
 
       if (filtered.length === 0) {
         feedContainer.innerHTML = \`
@@ -1274,6 +1306,7 @@ var web_default = `<!DOCTYPE html>
         \`;
         const actions=document.getElementById('emptyFilterActions');
         const addAction=(label,action)=>{const button=document.createElement('button');button.type='button';button.textContent=label;button.className='rounded-lg bg-zinc-800 px-3 py-2 text-xs text-cyan-300';button.onclick=action;actions.append(button);};
+        if(recentlyAddedOnly)addAction('Show all listings',()=>{recentlyAddedOnly=false;renderApp();});
         if(currentSearchTerm)addAction('Clear search',()=>document.getElementById('clearSearchBtn').click());
         if(activeDayFilter!=='all')addAction('Show all days',()=>document.querySelector('[data-day="all"]').click());
         if(typeof discoveryArea!=='undefined'&&discoveryArea==='nearby'&&activeRadiusMiles<45)addAction('Expand area',()=>setRadius(activeRadiusMiles===15?25:activeRadiusMiles===25?35:45));
@@ -1282,7 +1315,7 @@ var web_default = `<!DOCTYPE html>
         return;
       }
 
-      const filterKey=[typeof discoverySection==='undefined'?'local':discoverySection,typeof discoveryDays==='undefined'?7:discoveryDays,typeof discoveryArea==='undefined'?'nearby':discoveryArea,typeof discoverySport==='undefined'?'All sports':discoverySport,activeRadiusMiles,activeDayFilter,currentCategoryFilter,activeHubFilter,currentSearchTerm].join('|');
+      const filterKey=[typeof discoverySection==='undefined'?'local':discoverySection,typeof discoveryDays==='undefined'?7:discoveryDays,typeof discoveryArea==='undefined'?'nearby':discoveryArea,typeof discoverySport==='undefined'?'All sports':discoverySport,activeRadiusMiles,activeDayFilter,currentCategoryFilter,activeHubFilter,currentSearchTerm,recentlyAddedOnly].join('|');
       if(filterKey!==feedFilterKey){feedLimit=40;feedFilterKey=filterKey;}
       // A selected map pin may belong to a card beyond the initial batch.
       const selectedIndex=filtered.findIndex(ev=>ev.id===selectedEventId);
@@ -1308,6 +1341,7 @@ var web_default = `<!DOCTYPE html>
                 <span class="text-xs font-bold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
                   \${dayFormatted}
                 </span>
+                \${newListingBadge(ev)}
                 \${ev.has_prize ? '<span class="text-xs font-bold px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">Prize</span>' : ''}
               </div>
               <span class="text-xs text-zinc-400 flex items-center gap-1 font-mono-num font-medium">
@@ -1317,6 +1351,7 @@ var web_default = `<!DOCTYPE html>
             
             <h3 class="text-lg font-bold text-zinc-100 group-hover:text-white line-clamp-1"><button type="button" class="event-open-button text-left underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" data-open-event="\${escapeHTML(ev.id)}" onclick="event.stopPropagation();selectEvent(this.dataset.openEvent)">\${escapeHTML(ev.title)}</button></h3>
             <p class="text-xs text-zinc-400 line-clamp-2 mt-1 leading-relaxed">\${escapeHTML(ev.description)}</p>
+            \${newListingAddedLine(ev)}
 
             <p class="mt-2 text-xs text-zinc-400">\${escapeHTML(ev.time_range)} \${ev.source_url ? \`\xB7 <a onclick="event.stopPropagation()" class="text-cyan-400 underline" target="_blank" rel="noopener noreferrer" href="\${escapeHTML(ev.source_url)}">\${escapeHTML(ev.source)} \xB7 View event</a>\` : "\xB7 Community submission"}</p><p class="mt-2 text-xs text-zinc-400">Admission: \${escapeHTML(ev.price || "Check organizer")} \xB7 Ages: \${escapeHTML(ev.age || "Check organizer")}</p><div class="mt-2.5 flex items-center gap-1.5 flex-wrap">
               \${tagsHtml}
